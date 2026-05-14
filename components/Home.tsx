@@ -57,9 +57,9 @@ export function Home() {
         <DayToggle value={day} onChange={setDay} />
       </div>
 
-      {/* Focus stack (vertically centered) */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6">
-        <div className="w-full">
+      {/* Focus stack — centered when short, scrollable when the pile gets tall */}
+      <div className="flex flex-1 flex-col items-center overflow-y-auto px-6 pt-20">
+        <div className="my-auto w-full">
           {hydrated && (
             <FocusStack
               ref={focusRef}

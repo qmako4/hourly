@@ -16,24 +16,18 @@ import type { Task } from '@/lib/types';
 
 type StackPos = { blur: number; opacity: number; scale: number; y: number };
 
-const BASE_STACK_POSITIONS: StackPos[] = [
-  { blur: 0, opacity: 1, scale: 1, y: 0 },
-  { blur: 4, opacity: 0.7, scale: 0.97, y: 10 },
-  { blur: 8, opacity: 0.4, scale: 0.94, y: 20 },
-  { blur: 12, opacity: 0.2, scale: 0.91, y: 30 },
-];
+/** Each pill gets its own vertical slot — building-blocks style — so every task
+ *  is fully visible. The slot offset = pill height + gap between blocks. */
+const PILL_SLOT_HEIGHT = 64;
+const PILL_GAP = 8;
+const SLOT_STRIDE = PILL_SLOT_HEIGHT + PILL_GAP;
 
-/** Continues the cascade past 4 with exponential fall-off so deep piles remain
- *  visible as thin peeks without ever fully disappearing. */
 function stackPositionAt(idx: number): StackPos {
-  const base = BASE_STACK_POSITIONS[idx];
-  if (base) return base;
-  const overflow = idx - 3;
   return {
-    blur: Math.min(20, 12 + overflow * 1.5),
-    opacity: Math.max(0.04, 0.2 * Math.pow(0.7, overflow)),
-    scale: Math.max(0.84, 0.91 - overflow * 0.015),
-    y: Math.min(56, 30 + overflow * 6),
+    blur: 0,
+    opacity: 1,
+    scale: 1,
+    y: idx * SLOT_STRIDE,
   };
 }
 
@@ -140,14 +134,13 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
 
   const visible = tasks;
   const isEmpty = visible.length === 0;
-  // When composing, every pill shifts back by one slot so the input takes the
-  // front position without colliding with the existing pile.
+  // When composing, every pill shifts down one slot so the input takes slot 0.
   const slotOffset = composing ? 1 : 0;
-  // Stack height grows with the pile so the deepest peek isn't clipped by the +.
-  const deepestY = isEmpty
-    ? 0
-    : stackPositionAt(visible.length - 1 + slotOffset).y;
-  const stackHeight = 70 + deepestY;
+  const totalSlots = (isEmpty ? 0 : visible.length) + (composing || isEmpty ? 1 : 0);
+  const stackHeight = Math.max(
+    PILL_SLOT_HEIGHT,
+    totalSlots * SLOT_STRIDE - PILL_GAP,
+  );
 
   return (
     <motion.div
