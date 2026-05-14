@@ -1,10 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bin } from './Bin';
 import { DayToggle } from './DayToggle';
-import { Drawer } from './Drawer';
 import { FocusStack, type FocusStackHandle } from './FocusStack';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTasks } from '@/hooks/useTasks';
@@ -15,7 +13,6 @@ type NavigatorWithStandalone = Navigator & { standalone?: boolean };
 export function Home() {
   const { hydrated, pending, bin, addTask, completeTask, restoreTask, clearBin } = useTasks();
   const [day, setDay] = useState<TargetDate>('today');
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [wiggleKey, setWiggleKey] = useState(0);
   const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
@@ -55,29 +52,6 @@ export function Home() {
 
   return (
     <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
-      {/* Hamburger top-right — stays above the drawer so it remains tappable */}
-      <div className="fixed right-3 top-3 z-50">
-        <button
-          type="button"
-          onClick={() => setDrawerOpen((o) => !o)}
-          aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
-          className="flex h-12 w-12 items-center justify-center"
-        >
-          <motion.svg
-            width="20"
-            height="20"
-            viewBox="0 0 16 16"
-            fill="none"
-            animate={{ rotate: drawerOpen ? 90 : 0 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 32 }}
-          >
-            <line x1="1" y1="4.5" x2="15" y2="4.5" stroke="#0a0a0a" strokeWidth="1.2" strokeLinecap="round" />
-            <line x1="1" y1="8" x2="15" y2="8" stroke="#0a0a0a" strokeWidth="1.2" strokeLinecap="round" />
-            <line x1="1" y1="11.5" x2="15" y2="11.5" stroke="#0a0a0a" strokeWidth="1.2" strokeLinecap="round" />
-          </motion.svg>
-        </button>
-      </div>
-
       {/* Day toggle top-center */}
       <div className="absolute left-0 right-0 top-7 z-10 flex justify-center">
         <DayToggle value={day} onChange={setDay} />
@@ -177,15 +151,6 @@ export function Home() {
           <Bin items={bin} onRestore={restoreTask} onClear={clearBin} wiggleKey={wiggleKey} />
         </div>
       </div>
-
-      {/* Drawer */}
-      <Drawer
-        open={drawerOpen}
-        todayTasks={todayTasks}
-        tomorrowTasks={tomorrowTasks}
-        onComplete={handleComplete}
-        onClose={() => setDrawerOpen(false)}
-      />
     </main>
   );
 }

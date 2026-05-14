@@ -14,12 +14,28 @@ import {
 import { Pill } from './Pill';
 import type { Task } from '@/lib/types';
 
-const STACK_POSITIONS = [
+type StackPos = { blur: number; opacity: number; scale: number; y: number };
+
+const BASE_STACK_POSITIONS: StackPos[] = [
   { blur: 0, opacity: 1, scale: 1, y: 0 },
   { blur: 4, opacity: 0.7, scale: 0.97, y: 10 },
   { blur: 8, opacity: 0.4, scale: 0.94, y: 20 },
   { blur: 12, opacity: 0.2, scale: 0.91, y: 30 },
 ];
+
+/** Continues the cascade past 4 with exponential fall-off so deep piles remain
+ *  visible as thin peeks without ever fully disappearing. */
+function stackPositionAt(idx: number): StackPos {
+  const base = BASE_STACK_POSITIONS[idx];
+  if (base) return base;
+  const overflow = idx - 3;
+  return {
+    blur: Math.min(20, 12 + overflow * 1.5),
+    opacity: Math.max(0.04, 0.2 * Math.pow(0.7, overflow)),
+    scale: Math.max(0.84, 0.91 - overflow * 0.015),
+    y: Math.min(56, 30 + overflow * 6),
+  };
+}
 
 export type FocusStackHandle = {
   focusInput: () => void;
@@ -122,8 +138,11 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
     return () => window.removeEventListener('mousedown', handler);
   }, [composing, morphing, cancelCompose]);
 
-  const visible = tasks.slice(0, 4);
+  const visible = tasks;
   const isEmpty = visible.length === 0;
+  // Stack height grows with the pile so the deepest peek isn't clipped by the +.
+  const deepestY = isEmpty ? 0 : stackPositionAt(visible.length - 1).y;
+  const stackHeight = 70 + deepestY;
 
   return (
     <motion.div
@@ -132,14 +151,16 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
       style={{ minHeight: 100 }}
     >
       {/* Stacked pills (back to front) */}
-      <div className="relative w-full" style={{ height: 80 }}>
+      <div className="relative w-full" style={{ height: stackHeight }}>
         <AnimatePresence initial={false}>
           {visible
             .map((task, idx) => ({ task, idx }))
             .reverse()
             .map(({ task, idx }) => {
-              const pos = STACK_POSITIONS[Math.min(idx, STACK_POSITIONS.length - 1)] ?? STACK_POSITIONS[0]!;
+              const pos = stackPositionAt(idx);
               const isFront = idx === 0;
+              const composedPos =
+                composing && isFront ? stackPositionAt(1) : pos;
               return (
                 <motion.div
                   key={task.id}
@@ -148,16 +169,15 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                   exit={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="absolute left-0 right-0"
-                  style={{ zIndex: 10 - idx }}
+                  style={{ zIndex: 1000 - idx }}
                 >
-                  {/* When composing, push the front pill back by one slot. */}
                   <Pill
                     text={task.text}
                     size="focus"
-                    blur={composing && isFront ? STACK_POSITIONS[1]!.blur : pos.blur}
-                    opacity={composing && isFront ? STACK_POSITIONS[1]!.opacity : pos.opacity}
-                    scale={composing && isFront ? STACK_POSITIONS[1]!.scale : pos.scale}
-                    translateY={composing && isFront ? STACK_POSITIONS[1]!.y : pos.y}
+                    blur={composedPos.blur}
+                    opacity={composedPos.opacity}
+                    scale={composedPos.scale}
+                    translateY={composedPos.y}
                     interactive={isFront && !composing}
                     onComplete={isFront ? () => onComplete(task.id) : undefined}
                   />
