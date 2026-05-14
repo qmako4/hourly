@@ -155,7 +155,6 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
             .map((task, idx) => ({ task, idx }))
             .reverse()
             .map(({ task, idx }) => {
-              const isFront = idx === 0;
               // Shift every pill back one slot while composing so the input
               // can occupy slot 0 cleanly.
               const composedPos = stackPositionAt(idx + slotOffset);
@@ -176,8 +175,8 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     opacity={composedPos.opacity}
                     scale={composedPos.scale}
                     translateY={composedPos.y}
-                    interactive={isFront && !composing}
-                    onComplete={isFront ? () => onComplete(task.id) : undefined}
+                    interactive={!composing}
+                    onComplete={() => onComplete(task.id)}
                   />
                 </motion.div>
               );
@@ -243,10 +242,28 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         )}
       </div>
 
+      {/* Hint: how to complete. Visible only when there are tasks and the user
+          isn't actively composing. Light grey, small-caps, matches the other
+          metadata text in the app. */}
+      <motion.div
+        aria-hidden={isEmpty || composing}
+        animate={{ opacity: !isEmpty && !composing ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+        className="mt-5 text-center uppercase"
+        style={{
+          fontSize: 9.5,
+          letterSpacing: '0.18em',
+          color: '#c4c4c4',
+          fontWeight: 600,
+        }}
+      >
+        tap a task to complete
+      </motion.div>
+
       {/* + / × button. + adds a task; × (the + rotated 45°) dismisses the composer.
           Hidden in the empty state — the grey input is the only affordance. */}
       {!isEmpty && (
-        <div className="mt-8 flex justify-center">
+        <div className="mt-4 flex justify-center">
           <motion.button
             type="button"
             onClick={composing ? cancelCompose : beginCompose}
