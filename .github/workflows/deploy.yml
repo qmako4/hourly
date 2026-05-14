@@ -1,5 +1,9 @@
 name: Deploy to GitHub Pages
 
+# Builds and deploys the latest commit on claude/build-hourly-pwa-5nlFm.
+# Pages env protection allows deploys only from the default branch, so this
+# workflow lives there and checks out the code branch at runtime.
+
 on:
   push:
   workflow_dispatch:
