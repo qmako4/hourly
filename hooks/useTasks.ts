@@ -164,7 +164,7 @@ export function useTasks(): UseTasks {
     (day: TargetDate): Task[] =>
       tasks
         .filter((t) => t.completedAt === null && t.targetDate === day)
-        .sort((a, b) => a.createdAt - b.createdAt),
+        .sort((a, b) => b.createdAt - a.createdAt),
     [tasks],
   );
 

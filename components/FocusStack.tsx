@@ -186,59 +186,41 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
             })}
         </AnimatePresence>
 
-        {/* Empty state / compose layer */}
+        {/* Empty state / compose layer.
+            Empty == the grey "what's first?" input is shown immediately and
+            ready to be tapped/typed into. No intermediate placeholder text. */}
         {(isEmpty || composing) && (
           <div className="absolute left-0 right-0 top-0" style={{ zIndex: 20 }} data-composer>
-            {!composing ? (
-              <button
-                type="button"
-                onClick={beginCompose}
-                className="w-full rounded-full px-6 py-5 text-center"
-                style={{
-                  fontSize: 22,
-                  fontWeight: 500,
-                  letterSpacing: '-0.01em',
-                  color: '#c4c4c4',
-                }}
+            <form onSubmit={handleSubmit} data-composer>
+              <div
+                className="w-full rounded-full"
+                style={{ backgroundColor: '#f3f3f3' }}
               >
-                <motion.span
-                  initial={{ opacity: 0.6 }}
-                  animate={{ opacity: [0.6, 1, 0.6] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="inline-block"
-                >
-                  what&apos;s first?
-                </motion.span>
-              </button>
-            ) : (
-              <form onSubmit={handleSubmit} data-composer>
-                <div
-                  className="w-full rounded-full"
-                  style={{ backgroundColor: '#f3f3f3' }}
-                >
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    inputMode="text"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={handleKey}
-                    disabled={morphing}
-                    placeholder="what's first?"
-                    className="w-full rounded-full bg-transparent px-6 py-5 text-center outline-none placeholder:text-placeholder"
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 500,
-                      letterSpacing: '-0.01em',
-                      color: '#0a0a0a',
-                    }}
-                  />
-                </div>
-              </form>
-            )}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={handleKey}
+                  onFocus={() => {
+                    if (!composing) setComposing(true);
+                  }}
+                  disabled={morphing}
+                  placeholder="what's first?"
+                  className="w-full rounded-full bg-transparent px-6 py-5 text-center outline-none placeholder:text-placeholder"
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 500,
+                    letterSpacing: '-0.01em',
+                    color: '#0a0a0a',
+                  }}
+                />
+              </div>
+            </form>
           </div>
         )}
       </div>
