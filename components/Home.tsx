@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bin } from './Bin';
 import { DayToggle } from './DayToggle';
 import { Drawer } from './Drawer';
@@ -10,12 +10,26 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useTasks } from '@/hooks/useTasks';
 import type { TargetDate } from '@/lib/types';
 
+type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+
 export function Home() {
   const { hydrated, pending, bin, addTask, completeTask, restoreTask, clearBin } = useTasks();
   const [day, setDay] = useState<TargetDate>('today');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wiggleKey, setWiggleKey] = useState(0);
+  const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
+  const [showInstallSheet, setShowInstallSheet] = useState(false);
   const focusRef = useRef<FocusStackHandle>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const ua = window.navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const nav = window.navigator as NavigatorWithStandalone;
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true;
+    setIosNeedsInstall(isIOS && !isStandalone);
+  }, []);
 
   const todayTasks = useMemo(() => pending('today'), [pending]);
   const tomorrowTasks = useMemo(() => pending('tomorrow'), [pending]);
@@ -105,7 +119,57 @@ export function Home() {
             Reminding hourly
           </span>
         )}
+        {permission === 'unsupported' && iosNeedsInstall && (
+          <button
+            type="button"
+            onClick={() => setShowInstallSheet(true)}
+            className="rounded-full px-3.5 py-1.5"
+            style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 11, fontWeight: 500 }}
+          >
+            Add to Home Screen for nudges
+          </button>
+        )}
       </div>
+
+      {/* iOS install sheet */}
+      {showInstallSheet && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 px-4 pb-4"
+          onClick={() => setShowInstallSheet(false)}
+        >
+          <div
+            className="w-full max-w-[420px] rounded-2xl bg-white p-5"
+            style={{ boxShadow: '0 12px 40px rgba(0,0,0,0.12)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: '#0a0a0a' }}>Install for hourly nudges</h2>
+            <p className="mt-2" style={{ fontSize: 13, color: '#0a0a0a', lineHeight: 1.5 }}>
+              iOS only allows web notifications from apps added to the Home Screen (iOS 16.4+).
+            </p>
+            <ol className="mt-3 space-y-2" style={{ fontSize: 13, color: '#0a0a0a' }}>
+              <li>
+                <strong>1.</strong> Tap the <strong>Share</strong> button at the bottom of Safari
+                (square with an up-arrow).
+              </li>
+              <li>
+                <strong>2.</strong> Scroll and tap <strong>Add to Home Screen</strong>.
+              </li>
+              <li>
+                <strong>3.</strong> Open hourly from your Home Screen, then tap{' '}
+                <strong>Hourly nudges</strong> again to grant permission.
+              </li>
+            </ol>
+            <button
+              type="button"
+              onClick={() => setShowInstallSheet(false)}
+              className="mt-4 w-full rounded-full py-3"
+              style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 13, fontWeight: 500 }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom-left bin */}
       <div className="px-6 pb-6">
