@@ -1,6 +1,7 @@
 'use client';
 
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion, type PanInfo } from 'framer-motion';
+import { useEffect } from 'react';
 import type { Task } from '@/lib/types';
 import { Pill } from './Pill';
 
@@ -9,6 +10,7 @@ type DrawerProps = {
   todayTasks: Task[];
   tomorrowTasks: Task[];
   onComplete: (id: string) => void;
+  onClose: () => void;
 };
 
 const headerClass = 'text-center uppercase mb-3';
@@ -19,8 +21,29 @@ const headerStyle: React.CSSProperties = {
   color: '#999',
 };
 
-export function Drawer({ open, todayTasks, tomorrowTasks, onComplete }: DrawerProps) {
+const SPRING = { type: 'spring' as const, stiffness: 280, damping: 32 };
+
+export function Drawer({ open, todayTasks, tomorrowTasks, onComplete, onClose }: DrawerProps) {
   const isEmpty = todayTasks.length === 0 && tomorrowTasks.length === 0;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [open, onClose]);
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.x > 80 || info.velocity.x > 500) {
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -29,9 +52,22 @@ export function Drawer({ open, todayTasks, tomorrowTasks, onComplete }: DrawerPr
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
-          transition={{ type: 'spring', stiffness: 280, damping: 32 }}
+          transition={SPRING}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={{ left: 0, right: 0.4 }}
+          dragMomentum={false}
+          onDragEnd={handleDragEnd}
           className="fixed inset-0 z-30 bg-white"
         >
+          {/* Left-edge tap-to-close strip */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close menu"
+            className="absolute left-0 top-0 z-10 h-full w-7 bg-transparent"
+          />
+
           <div className="mx-auto flex h-full max-w-[480px] flex-col px-6 pb-16 pt-20">
             <div className="flex-1 overflow-y-auto">
               {isEmpty && (
@@ -64,7 +100,7 @@ export function Drawer({ open, todayTasks, tomorrowTasks, onComplete }: DrawerPr
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0 }}
-                              transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+                              transition={SPRING}
                             >
                               <Pill
                                 text={t.text}
@@ -92,7 +128,7 @@ export function Drawer({ open, todayTasks, tomorrowTasks, onComplete }: DrawerPr
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0 }}
-                              transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+                              transition={SPRING}
                             >
                               <Pill
                                 text={t.text}

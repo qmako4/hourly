@@ -55,8 +55,8 @@ export function Home() {
 
   return (
     <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
-      {/* Hamburger top-right */}
-      <div className="absolute right-5 top-5 z-20">
+      {/* Hamburger top-right — stays above the drawer so it remains tappable */}
+      <div className="fixed right-5 top-5 z-50">
         <button
           type="button"
           onClick={() => setDrawerOpen((o) => !o)}
@@ -69,7 +69,7 @@ export function Home() {
             viewBox="0 0 16 16"
             fill="none"
             animate={{ rotate: drawerOpen ? 90 : 0 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 32 }}
           >
             <line x1="1" y1="4.5" x2="15" y2="4.5" stroke="#0a0a0a" strokeWidth="1.2" strokeLinecap="round" />
             <line x1="1" y1="8" x2="15" y2="8" stroke="#0a0a0a" strokeWidth="1.2" strokeLinecap="round" />
@@ -184,6 +184,7 @@ export function Home() {
         todayTasks={todayTasks}
         tomorrowTasks={tomorrowTasks}
         onComplete={handleComplete}
+        onClose={() => setDrawerOpen(false)}
       />
     </main>
   );
