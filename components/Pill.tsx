@@ -73,7 +73,7 @@ export function Pill({
       layoutId={layoutId}
       layout
       onClick={handleTap}
-      disabled={!interactive || completing}
+      disabled={completing}
       animate={controls}
       initial={{
         filter: `blur(${blur}px)`,
@@ -137,12 +137,13 @@ export function Pill({
         </span>
       </motion.span>
 
-      {onOpenDetail && interactive && !completing && (
+      {onOpenDetail && !completing && (
         <span
           data-detail-trigger
           role="button"
           aria-label={`Details for ${text}`}
           className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center"
+          style={{ pointerEvents: 'auto' }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
             <circle cx="3.5" cy="9" r="1.1" fill={hasDetail ? '#0a0a0a' : '#999999'} />
