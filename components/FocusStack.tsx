@@ -39,10 +39,11 @@ type FocusStackProps = {
   tasks: Task[];
   onAdd: (text: string) => void;
   onComplete: (id: string) => void;
+  onOpenDetail: (taskId: string) => void;
 };
 
 export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function FocusStack(
-  { tasks, onAdd, onComplete },
+  { tasks, onAdd, onComplete, onOpenDetail },
   ref,
 ) {
   const [composing, setComposing] = useState(false);
@@ -176,7 +177,9 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     scale={composedPos.scale}
                     translateY={composedPos.y}
                     interactive={!composing}
+                    hasDetail={Boolean(task.detail && task.detail.length > 0)}
                     onComplete={() => onComplete(task.id)}
+                    onOpenDetail={() => onOpenDetail(task.id)}
                   />
                 </motion.div>
               );

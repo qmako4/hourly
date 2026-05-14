@@ -7,6 +7,8 @@ type PillProps = {
   text: string;
   size?: 'focus' | 'list';
   onComplete?: () => void;
+  onOpenDetail?: () => void;
+  hasDetail?: boolean;
   layoutId?: string;
   blur?: number;
   opacity?: number;
@@ -22,6 +24,8 @@ export function Pill({
   text,
   size = 'focus',
   onComplete,
+  onOpenDetail,
+  hasDetail = false,
   layoutId,
   blur = 0,
   opacity = 1,
@@ -44,7 +48,16 @@ export function Pill({
     });
   }, [blur, opacity, scale, translateY, controls]);
 
-  const handleTap = () => {
+  const handleTap = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // If the tap landed on the detail trigger (the … icon), open the sheet
+    // and skip the complete animation.
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('[data-detail-trigger]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      onOpenDetail?.();
+      return;
+    }
     if (!interactive || completing || !onComplete || struckRef.current) return;
     struckRef.current = true;
     setCompleting(true);
@@ -123,6 +136,21 @@ export function Pill({
           />
         </span>
       </motion.span>
+
+      {onOpenDetail && interactive && !completing && (
+        <span
+          data-detail-trigger
+          role="button"
+          aria-label={`Details for ${text}`}
+          className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+            <circle cx="3.5" cy="9" r="1.1" fill={hasDetail ? '#0a0a0a' : '#999999'} />
+            <circle cx="9" cy="9" r="1.1" fill={hasDetail ? '#0a0a0a' : '#999999'} />
+            <circle cx="14.5" cy="9" r="1.1" fill={hasDetail ? '#0a0a0a' : '#999999'} />
+          </svg>
+        </span>
+      )}
     </motion.button>
   );
 }

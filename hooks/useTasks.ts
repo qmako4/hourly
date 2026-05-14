@@ -26,7 +26,8 @@ function isTaskShape(value: unknown): value is Task {
     typeof v.text === 'string' &&
     (v.targetDate === 'today' || v.targetDate === 'tomorrow') &&
     typeof v.createdAt === 'number' &&
-    (v.completedAt === null || typeof v.completedAt === 'number')
+    (v.completedAt === null || typeof v.completedAt === 'number') &&
+    (v.detail === undefined || typeof v.detail === 'string')
   );
 }
 
@@ -90,6 +91,7 @@ export type UseTasks = {
   completeTask: (id: string) => void;
   restoreTask: (id: string) => void;
   clearBin: () => void;
+  updateTaskDetail: (id: string, detail: string) => void;
 };
 
 export function useTasks(): UseTasks {
@@ -160,6 +162,21 @@ export function useTasks(): UseTasks {
     setTasks((prev) => prev.filter((t) => t.completedAt === null));
   }, []);
 
+  const updateTaskDetail = useCallback((id: string, detail: string) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const trimmed = detail;
+        if (trimmed.length === 0) {
+          const { detail: _drop, ...rest } = t;
+          void _drop;
+          return rest;
+        }
+        return { ...t, detail: trimmed };
+      }),
+    );
+  }, []);
+
   const pending = useCallback(
     (day: TargetDate): Task[] =>
       tasks
@@ -172,5 +189,15 @@ export function useTasks(): UseTasks {
     .filter((t): t is Task & { completedAt: number } => t.completedAt !== null)
     .sort((a, b) => b.completedAt - a.completedAt);
 
-  return { tasks, hydrated, pending, bin, addTask, completeTask, restoreTask, clearBin };
+  return {
+    tasks,
+    hydrated,
+    pending,
+    bin,
+    addTask,
+    completeTask,
+    restoreTask,
+    clearBin,
+    updateTaskDetail,
+  };
 }

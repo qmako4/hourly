@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bin } from './Bin';
 import { DayToggle } from './DayToggle';
+import { DetailSheet } from './DetailSheet';
 import { FocusStack, type FocusStackHandle } from './FocusStack';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTasks } from '@/hooks/useTasks';
@@ -11,11 +12,22 @@ import type { TargetDate } from '@/lib/types';
 type NavigatorWithStandalone = Navigator & { standalone?: boolean };
 
 export function Home() {
-  const { hydrated, pending, bin, addTask, completeTask, restoreTask, clearBin } = useTasks();
+  const {
+    hydrated,
+    pending,
+    bin,
+    tasks,
+    addTask,
+    completeTask,
+    restoreTask,
+    clearBin,
+    updateTaskDetail,
+  } = useTasks();
   const [day, setDay] = useState<TargetDate>('today');
   const [wiggleKey, setWiggleKey] = useState(0);
   const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const focusRef = useRef<FocusStackHandle>(null);
 
   useEffect(() => {
@@ -50,6 +62,15 @@ export function Home() {
     [completeTask],
   );
 
+  const handleOpenDetail = useCallback((id: string) => {
+    setDetailTaskId(id);
+  }, []);
+
+  const detailTask = useMemo(
+    () => (detailTaskId ? tasks.find((t) => t.id === detailTaskId) ?? null : null),
+    [detailTaskId, tasks],
+  );
+
   return (
     <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
       {/* Day toggle top-center */}
@@ -66,6 +87,7 @@ export function Home() {
               tasks={visibleTasks}
               onAdd={handleAdd}
               onComplete={handleComplete}
+              onOpenDetail={handleOpenDetail}
             />
           )}
         </div>
@@ -151,6 +173,13 @@ export function Home() {
           <Bin items={bin} onRestore={restoreTask} onClear={clearBin} wiggleKey={wiggleKey} />
         </div>
       </div>
+
+      {/* Per-task detail bottom sheet */}
+      <DetailSheet
+        task={detailTask}
+        onClose={() => setDetailTaskId(null)}
+        onChange={updateTaskDetail}
+      />
     </main>
   );
 }

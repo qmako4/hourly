@@ -6,4 +6,5 @@ export type Task = {
   targetDate: TargetDate;
   createdAt: number;
   completedAt: number | null;
+  detail?: string;
 };
