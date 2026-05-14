@@ -70,6 +70,7 @@ export function Pill({
   return (
     <motion.button
       type="button"
+      data-task-pill
       layoutId={layoutId}
       layout
       onClick={handleTap}

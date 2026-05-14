@@ -115,9 +115,9 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
     }
   };
 
-  // Click-outside to dismiss compose. Tapping the per-pill detail-trigger
-  // (the ⋯) is exempt so the user can open the detail sheet without first
-  // losing their compose draft.
+  // Click-outside to dismiss compose. Pills and their detail-triggers are
+  // exempt so the user can complete a task or open its detail sheet without
+  // losing their compose draft. Use the × button (or Escape) to dismiss.
   useEffect(() => {
     if (!composing) return;
     const handler = (ev: MouseEvent) => {
@@ -128,7 +128,8 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         const targetEl = target as HTMLElement;
         const composer = targetEl.closest?.('[data-composer]');
         const detail = targetEl.closest?.('[data-detail-trigger]');
-        if (!composer && !detail) {
+        const pill = targetEl.closest?.('[data-task-pill]');
+        if (!composer && !detail && !pill) {
           if (!morphing) cancelCompose();
         }
       }
@@ -180,7 +181,6 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     opacity={composedPos.opacity}
                     scale={composedPos.scale}
                     translateY={composedPos.y}
-                    interactive={!composing}
                     hasDetail={Boolean(task.detail && task.detail.length > 0)}
                     onComplete={() => onComplete(task.id)}
                     onOpenDetail={() => onOpenDetail(task.id)}
