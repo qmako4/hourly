@@ -44,8 +44,12 @@ export function Home() {
   const tomorrowTasks = useMemo(() => pending('tomorrow'), [pending]);
   const visibleTasks = day === 'today' ? todayTasks : tomorrowTasks;
 
-  const getTodayTasks = useCallback(() => todayTasks, [todayTasks]);
-  const { permission, request } = useNotifications(getTodayTasks);
+  const allPending = useMemo(
+    () => [...todayTasks, ...tomorrowTasks],
+    [todayTasks, tomorrowTasks],
+  );
+  const getPending = useCallback(() => allPending, [allPending]);
+  const { permission, request } = useNotifications(getPending);
 
   const handleAdd = useCallback(
     (text: string) => {

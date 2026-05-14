@@ -6,87 +6,112 @@ import { isInQuietHours, msUntilNextHour } from '@/lib/dateUtils';
 
 export type NotificationPermissionState = 'unsupported' | 'default' | 'granted' | 'denied';
 
+const ICON_URL = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/icon-192.png`;
+
+/** Minute-thresholds (and labels) at which a task with a parsed `dueAt`
+ *  should fire a pre-deadline reminder. */
+const PRE_DEADLINE_THRESHOLDS: ReadonlyArray<{ mins: number; label: string }> = [
+  { mins: 60, label: 'in 1 hr' },
+  { mins: 30, label: 'in 30 min' },
+  { mins: 15, label: 'in 15 min' },
+];
+
 function readPermission(): NotificationPermissionState {
   if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'unsupported';
   return Notification.permission as NotificationPermissionState;
 }
 
-function buildBody(todayTasks: Task[]): string {
-  if (todayTasks.length === 0) return 'Nothing on the board.';
-  const shown = todayTasks.slice(0, 3).map((t) => `• ${t.text}`);
-  const extra = todayTasks.length - 3;
-  return extra > 0 ? `${shown.join('\n')}\n+${extra} more` : shown.join('\n');
-}
-
-const ICON_URL = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/icon-192.png`;
-
-function fireNotification(todayTasks: Task[]): void {
+function fire(title: string, body: string, tag: string): void {
   if (typeof Notification === 'undefined') return;
   if (Notification.permission !== 'granted') return;
   if (isInQuietHours()) return;
-  if (todayTasks.length === 0) return;
   try {
-    new Notification('hourly.', {
-      body: buildBody(todayTasks),
+    new Notification(title, {
+      body,
       icon: ICON_URL,
       badge: ICON_URL,
       silent: false,
-      tag: 'hourly-nudge',
+      tag,
     });
   } catch {
-    /* notifications may throw if permission was revoked or in private mode */
+    /* permission may have been revoked, or running in a private context */
   }
 }
+
+export type GetPendingTasks = () => Task[];
 
 export type UseNotifications = {
   permission: NotificationPermissionState;
   request: () => Promise<void>;
 };
 
-export function useNotifications(getTodayTasks: () => Task[]): UseNotifications {
+export function useNotifications(getPendingTasks: GetPendingTasks): UseNotifications {
   const [permission, setPermission] = useState<NotificationPermissionState>('unsupported');
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const getTasksRef = useRef(getTodayTasks);
+  const hourlyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hourlyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const minuteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const getTasksRef = useRef(getPendingTasks);
+  /** Dedup pre-deadline firings within a session, keyed `${id}:${threshold}`. */
+  const firedRef = useRef<Set<string>>(new Set());
 
-  // Keep latest getter without restarting the schedule.
   useEffect(() => {
-    getTasksRef.current = getTodayTasks;
-  }, [getTodayTasks]);
+    getTasksRef.current = getPendingTasks;
+  }, [getPendingTasks]);
 
   useEffect(() => {
     setPermission(readPermission());
   }, []);
 
-  const startSchedule = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    const ms = msUntilNextHour();
-    timeoutRef.current = setTimeout(() => {
-      fireNotification(getTasksRef.current());
-      intervalRef.current = setInterval(
-        () => {
-          fireNotification(getTasksRef.current());
-        },
-        60 * 60 * 1000,
-      );
-    }, ms);
+  // The hourly "front task" anchor — fires on the hour, only when there is
+  // a Today task to surface.
+  const fireHourly = useCallback(() => {
+    const front = getTasksRef.current().find((t) => t.targetDate === 'today');
+    if (!front) return;
+    fire('hourly.', front.text, `hourly-front`);
   }, []);
 
+  // Per-minute pass over all pending tasks: anything with a `dueAt` that
+  // matches one of the pre-deadline thresholds fires a single notification.
+  const fireDeadlineChecks = useCallback(() => {
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission !== 'granted') return;
+    if (isInQuietHours()) return;
+    const now = Date.now();
+    for (const task of getTasksRef.current()) {
+      if (!task.dueAt) continue;
+      const minsUntil = Math.round((task.dueAt - now) / 60_000);
+      for (const { mins, label } of PRE_DEADLINE_THRESHOLDS) {
+        if (minsUntil !== mins) continue;
+        const key = `${task.id}:${mins}`;
+        if (firedRef.current.has(key)) continue;
+        firedRef.current.add(key);
+        fire(`hourly. — ${label}`, task.text, `deadline-${task.id}-${mins}`);
+      }
+    }
+  }, []);
+
+  // Schedule both ticks once permission is granted.
   useEffect(() => {
     if (permission !== 'granted') return;
-    startSchedule();
+    if (hourlyTimeoutRef.current) clearTimeout(hourlyTimeoutRef.current);
+    if (hourlyIntervalRef.current) clearInterval(hourlyIntervalRef.current);
+    if (minuteIntervalRef.current) clearInterval(minuteIntervalRef.current);
+
+    const ms = msUntilNextHour();
+    hourlyTimeoutRef.current = setTimeout(() => {
+      fireHourly();
+      hourlyIntervalRef.current = setInterval(fireHourly, 60 * 60 * 1000);
+    }, ms);
+
+    // Per-minute deadline check.
+    minuteIntervalRef.current = setInterval(fireDeadlineChecks, 60 * 1000);
+
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (hourlyTimeoutRef.current) clearTimeout(hourlyTimeoutRef.current);
+      if (hourlyIntervalRef.current) clearInterval(hourlyIntervalRef.current);
+      if (minuteIntervalRef.current) clearInterval(minuteIntervalRef.current);
     };
-  }, [permission, startSchedule]);
+  }, [permission, fireHourly, fireDeadlineChecks]);
 
   const request = useCallback(async () => {
     if (typeof Notification === 'undefined') return;

@@ -8,6 +8,7 @@ import {
   startOfDay,
   todayStart,
 } from '@/lib/dateUtils';
+import { parseDeadline } from '@/lib/parseDeadline';
 
 const STORAGE_KEY = 'hourly:tasks:v1';
 
@@ -27,7 +28,8 @@ function isTaskShape(value: unknown): value is Task {
     (v.targetDate === 'today' || v.targetDate === 'tomorrow') &&
     typeof v.createdAt === 'number' &&
     (v.completedAt === null || typeof v.completedAt === 'number') &&
-    (v.detail === undefined || typeof v.detail === 'string')
+    (v.detail === undefined || typeof v.detail === 'string') &&
+    (v.dueAt === undefined || typeof v.dueAt === 'number')
   );
 }
 
@@ -124,12 +126,15 @@ export function useTasks(): UseTasks {
     (rawText: string, targetDate: TargetDate): Task | null => {
       const text = rawText.trim();
       if (!text) return null;
+      const now = Date.now();
+      const due = parseDeadline(text, targetDate, now);
       const task: Task = {
         id: makeId(),
         text,
         targetDate,
-        createdAt: Date.now(),
+        createdAt: now,
         completedAt: null,
+        ...(due !== null ? { dueAt: due } : {}),
       };
       setTasks((prev) => [...prev, task]);
       return task;
@@ -168,9 +173,18 @@ export function useTasks(): UseTasks {
       prev.map((t) => {
         if (t.id !== id || t.completedAt !== null) return t;
         const next: TargetDate = t.targetDate === 'today' ? 'tomorrow' : 'today';
-        // Re-anchor createdAt to now so the cleanup logic resolves the new
-        // target date relative to today, not relative to the original day.
-        return { ...t, targetDate: next, createdAt: Date.now() };
+        const now = Date.now();
+        // Re-parse the deadline against the new target day so a "12pm" task
+        // moved to Tomorrow becomes "tomorrow 12pm" rather than the original.
+        const due = parseDeadline(t.text, next, now);
+        const { dueAt: _drop, ...rest } = t;
+        void _drop;
+        return {
+          ...rest,
+          targetDate: next,
+          createdAt: now,
+          ...(due !== null ? { dueAt: due } : {}),
+        };
       }),
     );
   }, []);
