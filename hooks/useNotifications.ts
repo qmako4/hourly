@@ -18,6 +18,8 @@ function buildBody(todayTasks: Task[]): string {
   return extra > 0 ? `${shown.join('\n')}\n+${extra} more` : shown.join('\n');
 }
 
+const ICON_URL = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/icon-192.png`;
+
 function fireNotification(todayTasks: Task[]): void {
   if (typeof Notification === 'undefined') return;
   if (Notification.permission !== 'granted') return;
@@ -26,8 +28,8 @@ function fireNotification(todayTasks: Task[]): void {
   try {
     new Notification('hourly.', {
       body: buildBody(todayTasks),
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: ICON_URL,
+      badge: ICON_URL,
       silent: false,
       tag: 'hourly-nudge',
     });

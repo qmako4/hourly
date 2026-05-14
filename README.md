@@ -15,9 +15,26 @@ Open <http://localhost:3000>.
 
 > The PWA service worker is disabled in dev. Run `npm run build && npm start` to test the installable experience locally.
 
-## Deploy to Vercel
+## Deploy to GitHub Pages
 
-One line: `vercel` (after `npm i -g vercel`). Or push to GitHub and **Import Project** in the Vercel dashboard — no environment variables, no config required.
+A workflow at `.github/workflows/deploy.yml` builds and deploys on every push to `main`. Steps:
+
+1. Create a new GitHub repo named **`hourly`** under your account (the basePath in the workflow is `/hourly` — match it).
+2. Point this checkout at the new repo and push to `main`:
+
+   ```bash
+   git remote set-url origin git@github.com:<you>/hourly.git
+   git push -u origin HEAD:main
+   ```
+
+3. In the repo on github.com → **Settings → Pages → Source** = **GitHub Actions**.
+4. Watch the **Actions** tab. When the workflow finishes, your site is at <https://&lt;you&gt;.github.io/hourly/>.
+
+If you want a different repo name, update `NEXT_PUBLIC_BASE_PATH: /hourly` in the workflow to match.
+
+## Deploy to Vercel (alternative)
+
+One line: `vercel` (after `npm i -g vercel`). Or push to GitHub and **Import Project** in the Vercel dashboard — no environment variables, no config required. Vercel ignores `output: 'export'` / `basePath` when `NEXT_PUBLIC_BASE_PATH` is unset, so the same code works in both targets.
 
 ## Install on your phone
 
