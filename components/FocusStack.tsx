@@ -140,8 +140,13 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
 
   const visible = tasks;
   const isEmpty = visible.length === 0;
+  // When composing, every pill shifts back by one slot so the input takes the
+  // front position without colliding with the existing pile.
+  const slotOffset = composing ? 1 : 0;
   // Stack height grows with the pile so the deepest peek isn't clipped by the +.
-  const deepestY = isEmpty ? 0 : stackPositionAt(visible.length - 1).y;
+  const deepestY = isEmpty
+    ? 0
+    : stackPositionAt(visible.length - 1 + slotOffset).y;
   const stackHeight = 70 + deepestY;
 
   return (
@@ -157,10 +162,10 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
             .map((task, idx) => ({ task, idx }))
             .reverse()
             .map(({ task, idx }) => {
-              const pos = stackPositionAt(idx);
               const isFront = idx === 0;
-              const composedPos =
-                composing && isFront ? stackPositionAt(1) : pos;
+              // Shift every pill back one slot while composing so the input
+              // can occupy slot 0 cleanly.
+              const composedPos = stackPositionAt(idx + slotOffset);
               return (
                 <motion.div
                   key={task.id}
