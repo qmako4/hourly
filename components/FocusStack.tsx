@@ -189,9 +189,11 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         {/* Empty state / compose layer.
             Empty == the grey "what's first?" input is shown immediately and
             ready to be tapped/typed into. A breathing animated overlay sits
-            on top of the (placeholder-less) input as the "type here" cue. */}
+            on top of the (placeholder-less) input as the "type here" cue.
+            zIndex must beat the pill stack (max 1000) so the input is tappable
+            even when the just-added pill is pushed back beneath it. */}
         {(isEmpty || composing) && (
-          <div className="absolute left-0 right-0 top-0" style={{ zIndex: 20 }} data-composer>
+          <div className="absolute left-0 right-0 top-0" style={{ zIndex: 2000 }} data-composer>
             <form onSubmit={handleSubmit} data-composer>
               <div
                 className="relative w-full rounded-full"
