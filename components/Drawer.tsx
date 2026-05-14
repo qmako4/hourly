@@ -85,7 +85,7 @@ export function Drawer({ open, todayTasks, tomorrowTasks, onComplete, onClose }:
                 </div>
               )}
               <LayoutGroup id="drawer">
-                <div className="flex h-full flex-col justify-center gap-8">
+                <div className="flex flex-col gap-8">
                   {todayTasks.length > 0 && (
                     <section>
                       <h2 className={headerClass} style={headerStyle}>
