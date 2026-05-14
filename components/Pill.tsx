@@ -61,10 +61,11 @@ export function Pill({
     if (!interactive || completing || !onComplete || struckRef.current) return;
     struckRef.current = true;
     setCompleting(true);
-    // Wait for the strike + brighten + slide before reporting completion.
+    // Strike line draws fully (~340ms), then hand off to the layoutId hero
+    // animation, which morphs the pill into the completed pile.
     window.setTimeout(() => {
       onComplete();
-    }, 840);
+    }, 380);
   };
 
   return (
@@ -96,33 +97,8 @@ export function Pill({
       }}
       aria-label={interactive ? `Complete: ${text}` : text}
     >
-      {completing && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          initial={{ backgroundColor: 'rgba(255,255,255,0)' }}
-          animate={{
-            backgroundColor: [
-              'rgba(255,255,255,0)',
-              'rgba(255,255,255,1)',
-              'rgba(255,255,255,0)',
-            ],
-          }}
-          transition={{ duration: 0.34, times: [0, 0.5, 1], ease: STANDARD_EASE }}
-        />
-      )}
       <motion.span
         className="relative inline-block whitespace-pre-wrap break-words text-center w-full"
-        animate={
-          completing
-            ? { x: 8, scale: 0.98, opacity: 0 }
-            : { x: 0, scale: 1, opacity: 1 }
-        }
-        transition={
-          completing
-            ? { duration: 0.5, ease: STANDARD_EASE, delay: 0.34 }
-            : { duration: 0.2 }
-        }
         style={{ display: 'inline-block' }}
       >
         <span className="relative inline-block">

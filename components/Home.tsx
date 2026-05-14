@@ -1,7 +1,8 @@
 'use client';
 
+import { LayoutGroup } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bin } from './Bin';
+import { CompletedPile } from './CompletedPile';
 import { DayToggle } from './DayToggle';
 import { DetailSheet } from './DetailSheet';
 import { FocusStack, type FocusStackHandle } from './FocusStack';
@@ -20,11 +21,9 @@ export function Home() {
     addTask,
     completeTask,
     restoreTask,
-    clearBin,
     updateTaskDetail,
   } = useTasks();
   const [day, setDay] = useState<TargetDate>('today');
-  const [wiggleKey, setWiggleKey] = useState(0);
   const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -57,7 +56,6 @@ export function Home() {
   const handleComplete = useCallback(
     (id: string) => {
       completeTask(id);
-      setWiggleKey((k) => k + 1);
     },
     [completeTask],
   );
@@ -72,7 +70,8 @@ export function Home() {
   );
 
   return (
-    <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
+    <LayoutGroup id="tasks">
+      <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
       {/* Day toggle top-center */}
       <div className="absolute left-0 right-0 top-7 z-10 flex justify-center">
         <DayToggle value={day} onChange={setDay} />
@@ -167,12 +166,9 @@ export function Home() {
         </div>
       )}
 
-      {/* Bottom-left bin */}
-      <div className="px-6 pb-6">
-        <div className="flex items-end justify-start">
-          <Bin items={bin} onRestore={restoreTask} onClear={clearBin} wiggleKey={wiggleKey} />
-        </div>
-      </div>
+      {/* Completed-tasks pile, bottom-left, visible. Newest sits on top of
+          the pile; tap any item to restore. */}
+      <CompletedPile items={bin} onRestore={restoreTask} />
 
       {/* Per-task detail bottom sheet */}
       <DetailSheet
@@ -180,6 +176,7 @@ export function Home() {
         onClose={() => setDetailTaskId(null)}
         onChange={updateTaskDetail}
       />
-    </main>
+      </main>
+    </LayoutGroup>
   );
 }

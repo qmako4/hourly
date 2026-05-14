@@ -177,6 +177,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                   <Pill
                     text={task.text}
                     size="focus"
+                    layoutId={`pill-${task.id}`}
                     blur={composedPos.blur}
                     opacity={composedPos.opacity}
                     scale={composedPos.scale}
