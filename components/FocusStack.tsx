@@ -188,14 +188,32 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
 
         {/* Empty state / compose layer.
             Empty == the grey "what's first?" input is shown immediately and
-            ready to be tapped/typed into. No intermediate placeholder text. */}
+            ready to be tapped/typed into. A breathing animated overlay sits
+            on top of the (placeholder-less) input as the "type here" cue. */}
         {(isEmpty || composing) && (
           <div className="absolute left-0 right-0 top-0" style={{ zIndex: 20 }} data-composer>
             <form onSubmit={handleSubmit} data-composer>
               <div
-                className="w-full rounded-full"
+                className="relative w-full rounded-full"
                 style={{ backgroundColor: '#f3f3f3' }}
               >
+                {draft === '' && (
+                  <motion.div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                    initial={{ opacity: 0.6 }}
+                    animate={{ opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
+                      color: '#c4c4c4',
+                    }}
+                  >
+                    what&apos;s first?
+                  </motion.div>
+                )}
                 <input
                   ref={inputRef}
                   type="text"
@@ -210,8 +228,8 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     if (!composing) setComposing(true);
                   }}
                   disabled={morphing}
-                  placeholder="what's first?"
-                  className="w-full rounded-full bg-transparent px-6 py-5 text-center outline-none placeholder:text-placeholder"
+                  aria-label="What's first?"
+                  className="w-full rounded-full bg-transparent px-6 py-5 text-center outline-none"
                   style={{
                     fontSize: 22,
                     fontWeight: 500,
@@ -225,8 +243,9 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         )}
       </div>
 
-      {/* + / × button. + adds a task; × (the + rotated 45°) dismisses the composer. */}
-      {(composing || !isEmpty) && (
+      {/* + / × button. + adds a task; × (the + rotated 45°) dismisses the composer.
+          Hidden in the empty state — the grey input is the only affordance. */}
+      {!isEmpty && (
         <div className="mt-8 flex justify-center">
           <motion.button
             type="button"
