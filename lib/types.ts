@@ -1,9 +1,9 @@
+export type TargetDate = 'today' | 'tomorrow';
+
 export type Task = {
   id: string;
   text: string;
-  targetDate: string;
+  targetDate: TargetDate;
   createdAt: number;
   completedAt: number | null;
-  lastNotified: number | null;
-  rolledOver: boolean;
 };
