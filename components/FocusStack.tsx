@@ -39,7 +39,6 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
   const [draft, setDraft] = useState('');
   const [morphing, setMorphing] = useState(false);
   const containerControls = useAnimationControls();
-  const morphBoxControls = useAnimationControls();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const beginCompose = useCallback(() => {
@@ -75,12 +74,6 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         return;
       }
       setMorphing(true);
-      // Animate border to transparent + background to pill fill simultaneously.
-      void morphBoxControls.start({
-        backgroundColor: '#f3f3f3',
-        borderColor: 'rgba(10,10,10,0)',
-        transition: { duration: 0.35, ease: [0.32, 0.72, 0, 1] },
-      });
       // Confirmation spring.
       void containerControls.start({
         scale: [1, 1.04, 1],
@@ -90,17 +83,13 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         onAdd(trimmed);
         setMorphing(false);
         setDraft('');
-        void morphBoxControls.set({
-          backgroundColor: 'rgba(255,255,255,0)',
-          borderColor: 'rgba(10,10,10,1)',
-        });
         // Keep input focused for rapid consecutive entry.
         requestAnimationFrame(() => {
           inputRef.current?.focus();
         });
-      }, 360);
+      }, 280);
     },
-    [onAdd, containerControls, morphBoxControls, cancelCompose],
+    [onAdd, containerControls, cancelCompose],
   );
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -203,14 +192,9 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
               </button>
             ) : (
               <form onSubmit={handleSubmit} data-composer>
-                <motion.div
-                  animate={morphBoxControls}
-                  initial={{
-                    backgroundColor: 'rgba(255,255,255,0)',
-                    borderColor: 'rgba(10,10,10,1)',
-                  }}
+                <div
                   className="w-full rounded-full"
-                  style={{ borderWidth: 1.5, borderStyle: 'solid' }}
+                  style={{ backgroundColor: '#f3f3f3' }}
                 >
                   <input
                     ref={inputRef}
@@ -232,7 +216,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                       color: '#0a0a0a',
                     }}
                   />
-                </motion.div>
+                </div>
               </form>
             )}
           </div>
