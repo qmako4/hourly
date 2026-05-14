@@ -223,16 +223,17 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         )}
       </div>
 
-      {/* + button — only when tasks exist and not composing */}
-      {!isEmpty && !composing && (
+      {/* + / × button. + adds a task; × (the + rotated 45°) dismisses the composer. */}
+      {(composing || !isEmpty) && (
         <div className="mt-8 flex justify-center">
           <motion.button
             type="button"
-            onClick={beginCompose}
+            onClick={composing ? cancelCompose : beginCompose}
             whileTap={{ scale: 0.98, opacity: 0.95 }}
-            transition={{ duration: 0.08 }}
+            animate={{ rotate: composing ? 45 : 0 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
             className="flex h-9 w-9 items-center justify-center rounded-full"
-            aria-label="Add task"
+            aria-label={composing ? 'Cancel' : 'Add task'}
           >
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
               <path
