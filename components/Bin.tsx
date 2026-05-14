@@ -43,11 +43,11 @@ export function Bin({ items, onRestore, onClear, wiggleKey }: BinProps) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2"
+        className="-m-3 flex min-h-[48px] min-w-[48px] items-center gap-2 p-3"
         aria-label={`Bin (${items.length})`}
       >
         <motion.span animate={iconControls} className="inline-flex">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+          <svg width="22" height="22" viewBox="0 0 18 18" fill="none" aria-hidden>
             <path
               d="M3.5 5h11M7.5 3.5h3M5 5l.7 9a1.3 1.3 0 0 0 1.3 1.2h4a1.3 1.3 0 0 0 1.3-1.2L13 5"
               stroke="#0a0a0a"
@@ -77,8 +77,8 @@ export function Bin({ items, onRestore, onClear, wiggleKey }: BinProps) {
                 type="button"
                 onClick={onClear}
                 disabled={items.length === 0}
-                className="disabled:opacity-30"
-                style={{ fontSize: 12, color: '#0a0a0a' }}
+                className="-mr-2 -my-1 rounded-full px-3 py-2 disabled:opacity-30"
+                style={{ fontSize: 13, color: '#0a0a0a' }}
               >
                 Clear
               </button>
@@ -109,9 +109,9 @@ export function Bin({ items, onRestore, onClear, wiggleKey }: BinProps) {
                     type="button"
                     onClick={() => onRestore(t.id)}
                     aria-label={`Restore ${t.text}`}
-                    className="shrink-0 p-1"
+                    className="-my-1 -mr-2 flex h-10 w-10 shrink-0 items-center justify-center"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden>
                       <path
                         d="M3 8a5 5 0 0 1 9-3M3 4v3.5h3.5"
                         stroke="#0a0a0a"

@@ -232,10 +232,10 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
             whileTap={{ scale: 0.98, opacity: 0.95 }}
             animate={{ rotate: composing ? 45 : 0 }}
             transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-            className="flex h-9 w-9 items-center justify-center rounded-full"
+            className="flex h-12 w-12 items-center justify-center rounded-full"
             aria-label={composing ? 'Cancel' : 'Add task'}
           >
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
+            <svg width="26" height="26" viewBox="0 0 22 22" fill="none" aria-hidden>
               <path
                 d="M11 4.5V17.5M4.5 11H17.5"
                 stroke="#0a0a0a"

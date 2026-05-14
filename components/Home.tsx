@@ -56,16 +56,16 @@ export function Home() {
   return (
     <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
       {/* Hamburger top-right — stays above the drawer so it remains tappable */}
-      <div className="fixed right-5 top-5 z-50">
+      <div className="fixed right-3 top-3 z-50">
         <button
           type="button"
           onClick={() => setDrawerOpen((o) => !o)}
           aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
-          className="flex h-10 w-10 items-center justify-center"
+          className="flex h-12 w-12 items-center justify-center"
         >
           <motion.svg
-            width="16"
-            height="16"
+            width="20"
+            height="20"
             viewBox="0 0 16 16"
             fill="none"
             animate={{ rotate: drawerOpen ? 90 : 0 }}
@@ -105,8 +105,8 @@ export function Home() {
             onClick={() => {
               void request();
             }}
-            className="rounded-full px-3.5 py-1.5"
-            style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 11, fontWeight: 500 }}
+            className="rounded-full px-4 py-2.5"
+            style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 12, fontWeight: 500 }}
           >
             Hourly nudges
           </button>
@@ -123,8 +123,8 @@ export function Home() {
           <button
             type="button"
             onClick={() => setShowInstallSheet(true)}
-            className="rounded-full px-3.5 py-1.5"
-            style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 11, fontWeight: 500 }}
+            className="rounded-full px-4 py-2.5"
+            style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 12, fontWeight: 500 }}
           >
             Add to Home Screen for nudges
           </button>
