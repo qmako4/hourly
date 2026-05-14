@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useAnimationControls } from 'framer-motion';
+import { motion, type PanInfo, useAnimationControls } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
 type PillProps = {
@@ -8,6 +8,8 @@ type PillProps = {
   size?: 'focus' | 'list';
   onComplete?: () => void;
   onOpenDetail?: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
   hasDetail?: boolean;
   layoutId?: string;
   blur?: number;
@@ -18,6 +20,9 @@ type PillProps = {
   interactive?: boolean;
 };
 
+const SWIPE_DISTANCE_THRESHOLD = 100;
+const SWIPE_VELOCITY_THRESHOLD = 500;
+
 const STANDARD_EASE: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 export function Pill({
@@ -25,6 +30,8 @@ export function Pill({
   size = 'focus',
   onComplete,
   onOpenDetail,
+  onSwipeLeft,
+  onSwipeRight,
   hasDetail = false,
   layoutId,
   blur = 0,
@@ -37,6 +44,8 @@ export function Pill({
   const controls = useAnimationControls();
   const fontSizePx = size === 'focus' ? 22 : 15.5;
   const struckRef = useRef(false);
+  const swipedRef = useRef(false);
+  const draggable = Boolean(onSwipeLeft || onSwipeRight);
 
   useEffect(() => {
     void controls.start({
@@ -68,6 +77,19 @@ export function Pill({
     }, 380);
   };
 
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (swipedRef.current) return;
+    const { x } = info.offset;
+    const vx = info.velocity.x;
+    if (x > SWIPE_DISTANCE_THRESHOLD || vx > SWIPE_VELOCITY_THRESHOLD) {
+      swipedRef.current = true;
+      onSwipeRight?.();
+    } else if (x < -SWIPE_DISTANCE_THRESHOLD || vx < -SWIPE_VELOCITY_THRESHOLD) {
+      swipedRef.current = true;
+      onSwipeLeft?.();
+    }
+  };
+
   return (
     <motion.button
       type="button"
@@ -85,6 +107,11 @@ export function Pill({
       }}
       whileTap={interactive && !completing ? { scale: scale * 0.98, opacity: opacity * 0.95 } : undefined}
       transition={{ type: 'spring', stiffness: 100, damping: 18 }}
+      drag={draggable && !completing ? 'x' : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.55}
+      dragMomentum={false}
+      onDragEnd={handleDragEnd}
       className="relative w-full select-none overflow-hidden rounded-full px-6 py-5 text-left"
       style={{
         backgroundColor: '#f3f3f3',

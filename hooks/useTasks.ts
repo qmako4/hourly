@@ -92,6 +92,7 @@ export type UseTasks = {
   restoreTask: (id: string) => void;
   clearBin: () => void;
   updateTaskDetail: (id: string, detail: string) => void;
+  toggleTaskDay: (id: string) => void;
 };
 
 export function useTasks(): UseTasks {
@@ -162,6 +163,18 @@ export function useTasks(): UseTasks {
     setTasks((prev) => prev.filter((t) => t.completedAt === null));
   }, []);
 
+  const toggleTaskDay = useCallback((id: string) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id || t.completedAt !== null) return t;
+        const next: TargetDate = t.targetDate === 'today' ? 'tomorrow' : 'today';
+        // Re-anchor createdAt to now so the cleanup logic resolves the new
+        // target date relative to today, not relative to the original day.
+        return { ...t, targetDate: next, createdAt: Date.now() };
+      }),
+    );
+  }, []);
+
   const updateTaskDetail = useCallback((id: string, detail: string) => {
     setTasks((prev) =>
       prev.map((t) => {
@@ -199,5 +212,6 @@ export function useTasks(): UseTasks {
     restoreTask,
     clearBin,
     updateTaskDetail,
+    toggleTaskDay,
   };
 }

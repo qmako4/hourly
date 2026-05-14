@@ -40,10 +40,11 @@ type FocusStackProps = {
   onAdd: (text: string) => void;
   onComplete: (id: string) => void;
   onOpenDetail: (taskId: string) => void;
+  onToggleDay: (id: string) => void;
 };
 
 export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function FocusStack(
-  { tasks, onAdd, onComplete, onOpenDetail },
+  { tasks, onAdd, onComplete, onOpenDetail, onToggleDay },
   ref,
 ) {
   const [composing, setComposing] = useState(false);
@@ -185,6 +186,8 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     hasDetail={Boolean(task.detail && task.detail.length > 0)}
                     onComplete={() => onComplete(task.id)}
                     onOpenDetail={() => onOpenDetail(task.id)}
+                    onSwipeLeft={() => onComplete(task.id)}
+                    onSwipeRight={() => onToggleDay(task.id)}
                   />
                 </motion.div>
               );

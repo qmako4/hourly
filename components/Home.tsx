@@ -22,6 +22,7 @@ export function Home() {
     completeTask,
     restoreTask,
     updateTaskDetail,
+    toggleTaskDay,
   } = useTasks();
   const [day, setDay] = useState<TargetDate>('today');
   const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
@@ -87,6 +88,7 @@ export function Home() {
               onAdd={handleAdd}
               onComplete={handleComplete}
               onOpenDetail={handleOpenDetail}
+              onToggleDay={toggleTaskDay}
             />
           )}
         </div>
