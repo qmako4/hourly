@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/types';
+import { FADE, SPRING_TIGHT } from '@/lib/motion';
 
 type DetailSheetProps = {
   task: Task | null;
@@ -47,7 +48,7 @@ export function DetailSheet({ task, onClose, onChange }: DetailSheetProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={FADE}
           className="fixed inset-0 z-50 flex items-end justify-center"
           style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
           onClick={onClose}
@@ -57,7 +58,7 @@ export function DetailSheet({ task, onClose, onChange }: DetailSheetProps) {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+            transition={SPRING_TIGHT}
             className="w-full max-w-[480px] rounded-t-3xl bg-white px-6 pb-6 pt-5"
             style={{ boxShadow: '0 -12px 40px rgba(0,0,0,0.12)' }}
             onClick={(e) => e.stopPropagation()}

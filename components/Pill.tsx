@@ -2,6 +2,7 @@
 
 import { motion, type PanInfo, useAnimationControls } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { SPRING, STRIKE } from '@/lib/motion';
 
 type PillProps = {
   text: string;
@@ -22,8 +23,6 @@ type PillProps = {
 
 const SWIPE_DISTANCE_THRESHOLD = 100;
 const SWIPE_VELOCITY_THRESHOLD = 500;
-
-const STANDARD_EASE: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 export function Pill({
   text,
@@ -53,7 +52,7 @@ export function Pill({
       opacity,
       scale,
       y: translateY,
-      transition: { type: 'spring', stiffness: 100, damping: 18 },
+      transition: SPRING,
     });
   }, [blur, opacity, scale, translateY, controls]);
 
@@ -69,12 +68,16 @@ export function Pill({
     }
     if (!interactive || completing || !onComplete || struckRef.current) return;
     struckRef.current = true;
+    // Just flip state — the actual onComplete fires from the strike line's
+    // onAnimationComplete so the hand-off stays in lockstep with what's on
+    // screen (no fixed timer that can desync on a frame hitch).
     setCompleting(true);
-    // Strike line draws fully (~340ms), then hand off to the layoutId hero
-    // animation, which morphs the pill into the completed pile.
-    window.setTimeout(() => {
-      onComplete();
-    }, 380);
+  };
+
+  const handleStrikeComplete = () => {
+    if (struckRef.current && completing) {
+      onComplete?.();
+    }
   };
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
@@ -106,7 +109,7 @@ export function Pill({
         y: translateY,
       }}
       whileTap={interactive && !completing ? { scale: scale * 0.98, opacity: opacity * 0.95 } : undefined}
-      transition={{ type: 'spring', stiffness: 100, damping: 18 }}
+      transition={SPRING}
       drag={draggable && !completing ? 'x' : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.55}
@@ -136,7 +139,8 @@ export function Pill({
             style={{ backgroundColor: '#0a0a0a' }}
             initial={{ scaleX: 0 }}
             animate={{ scaleX: completing ? 1 : 0 }}
-            transition={{ duration: 0.34, ease: STANDARD_EASE }}
+            transition={STRIKE}
+            onAnimationComplete={handleStrikeComplete}
           />
         </span>
       </motion.span>

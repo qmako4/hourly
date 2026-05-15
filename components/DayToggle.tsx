@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import type { TargetDate } from '@/lib/types';
+import { SPRING_TIGHT } from '@/lib/motion';
 
 type DayToggleProps = {
   value: TargetDate;
@@ -27,7 +28,7 @@ export function DayToggle({ value, onChange }: DayToggleProps) {
                 layoutId="day-toggle-underline"
                 className="absolute bottom-1 left-3 right-3 h-px"
                 style={{ backgroundColor: '#0a0a0a' }}
-                transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+                transition={SPRING_TIGHT}
               />
             )}
           </button>

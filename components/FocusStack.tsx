@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { Pill } from './Pill';
 import type { Task } from '@/lib/types';
+import { EASE_IOS, FADE, SPRING_TIGHT } from '@/lib/motion';
 
 type StackPos = { blur: number; opacity: number; scale: number; y: number };
 
@@ -89,7 +90,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
       // Confirmation spring.
       void containerControls.start({
         scale: [1, 1.04, 1],
-        transition: { duration: 0.35, times: [0, 0.5, 1], ease: [0.32, 0.72, 0, 1] },
+        transition: { duration: 0.35, times: [0, 0.5, 1], ease: EASE_IOS },
       });
       window.setTimeout(() => {
         onAdd(trimmed);
@@ -259,7 +260,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
       <motion.div
         aria-hidden={isEmpty || composing}
         animate={{ opacity: !isEmpty && !composing ? 1 : 0 }}
-        transition={{ duration: 0.2 }}
+        transition={FADE}
         className="mt-5 text-center uppercase"
         style={{
           fontSize: 9.5,
@@ -280,7 +281,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
             onClick={composing ? cancelCompose : beginCompose}
             whileTap={{ scale: 0.98, opacity: 0.95 }}
             animate={{ rotate: composing ? 45 : 0 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            transition={SPRING_TIGHT}
             className="flex h-12 w-12 items-center justify-center rounded-full"
             aria-label={composing ? 'Cancel' : 'Add task'}
           >

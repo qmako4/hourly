@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/types';
+import { SPRING } from '@/lib/motion';
 
 type CompletedPileProps = {
   items: Task[];
@@ -47,7 +48,7 @@ export function CompletedPile({ items, onRestore, onClear }: CompletedPileProps)
           layoutId={`pill-${t.id}`}
           onClick={() => onRestore(t.id)}
           whileTap={{ scale: 0.97, opacity: 0.9 }}
-          transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+          transition={SPRING}
           className="overflow-hidden rounded-full px-3 py-1.5 text-left"
           style={{
             backgroundColor: '#f3f3f3',
