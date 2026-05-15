@@ -1,17 +1,40 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/types';
 
 type CompletedPileProps = {
   items: Task[];
   onRestore: (id: string) => void;
+  onClear: () => void;
 };
 
 const MAX_VISIBLE = 6;
 
-export function CompletedPile({ items, onRestore }: CompletedPileProps) {
+export function CompletedPile({ items, onRestore, onClear }: CompletedPileProps) {
   const visible = items.slice(0, MAX_VISIBLE);
+  const [confirming, setConfirming] = useState(false);
+  const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetRef.current) clearTimeout(resetRef.current);
+    };
+  }, []);
+
+  const handleClear = () => {
+    if (confirming) {
+      if (resetRef.current) clearTimeout(resetRef.current);
+      setConfirming(false);
+      onClear();
+      return;
+    }
+    setConfirming(true);
+    resetRef.current = setTimeout(() => setConfirming(false), 2500);
+  };
+
+  if (items.length === 0) return null;
 
   return (
     <div
@@ -48,6 +71,21 @@ export function CompletedPile({ items, onRestore }: CompletedPileProps) {
           </span>
         </motion.button>
       ))}
+
+      <button
+        type="button"
+        onClick={handleClear}
+        className="mt-1 self-start px-1 py-1 uppercase"
+        style={{
+          fontSize: 9.5,
+          letterSpacing: '0.18em',
+          fontWeight: 600,
+          color: confirming ? '#0a0a0a' : '#c4c4c4',
+        }}
+        aria-label={confirming ? 'Confirm clear completed tasks' : 'Clear completed tasks'}
+      >
+        {confirming ? 'clear?' : 'clear'}
+      </button>
     </div>
   );
 }

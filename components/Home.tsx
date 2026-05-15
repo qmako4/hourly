@@ -21,6 +21,7 @@ export function Home() {
     addTask,
     completeTask,
     restoreTask,
+    clearBin,
     updateTaskDetail,
     toggleTaskDay,
   } = useTasks();
@@ -174,7 +175,7 @@ export function Home() {
 
       {/* Completed-tasks pile, bottom-left, visible. Newest sits on top of
           the pile; tap any item to restore. */}
-      <CompletedPile items={bin} onRestore={restoreTask} />
+      <CompletedPile items={bin} onRestore={restoreTask} onClear={clearBin} />
 
       {/* Per-task detail bottom sheet */}
       <DetailSheet
