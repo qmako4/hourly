@@ -29,7 +29,8 @@ function isTaskShape(value: unknown): value is Task {
     typeof v.createdAt === 'number' &&
     (v.completedAt === null || typeof v.completedAt === 'number') &&
     (v.detail === undefined || typeof v.detail === 'string') &&
-    (v.dueAt === undefined || typeof v.dueAt === 'number')
+    (v.dueAt === undefined || typeof v.dueAt === 'number') &&
+    (v.recurring === undefined || typeof v.recurring === 'boolean')
   );
 }
 
@@ -55,10 +56,27 @@ function writeStorage(tasks: Task[]): void {
   }
 }
 
+/** Reset a task to a fresh, uncompleted Today task (used by carry-over and
+ *  the daily respawn of recurring tasks). */
+function reanchorToToday(t: Task, now: number): Task {
+  const due = parseDeadline(t.text, 'today', now);
+  const { dueAt: _drop, ...rest } = t;
+  void _drop;
+  return {
+    ...rest,
+    completedAt: null,
+    targetDate: 'today',
+    createdAt: now,
+    ...(due !== null ? { dueAt: due } : {}),
+  };
+}
+
 /**
  * Apply load-time cleanup:
- *  - Drop completed tasks older than 7 days.
- *  - Drop incomplete tasks whose resolved target day is before today.
+ *  - Recurring tasks completed on a previous day respawn fresh for today.
+ *  - Other completed tasks older than 7 days drop from the pile.
+ *  - Incomplete tasks whose day has passed carry over into today
+ *    (they are never silently lost).
  *  - Promote tomorrow→today when tomorrow has arrived.
  */
 function applyCleanup(input: Task[], now: number): Task[] {
@@ -66,13 +84,20 @@ function applyCleanup(input: Task[], now: number): Task[] {
   const out: Task[] = [];
   for (const t of input) {
     if (t.completedAt !== null) {
+      const completedDay = startOfDay(t.completedAt);
+      if (t.recurring && completedDay < today) {
+        // A daily task finished on a previous day — bring it back fresh.
+        out.push(reanchorToToday(t, now));
+        continue;
+      }
       if (now - t.completedAt > SEVEN_DAYS_MS) continue;
       out.push(t);
       continue;
     }
     const originalTarget = resolveOriginalTargetStart(t.createdAt, t.targetDate);
     if (originalTarget < today) {
-      // expired - fade it
+      // Day has passed — carry it over into today rather than dropping it.
+      out.push(reanchorToToday(t, now));
       continue;
     }
     if (t.targetDate === 'tomorrow' && originalTarget <= today) {
@@ -95,6 +120,8 @@ export type UseTasks = {
   clearBin: () => void;
   updateTaskDetail: (id: string, detail: string) => void;
   toggleTaskDay: (id: string) => void;
+  editTaskText: (id: string, text: string) => void;
+  setRecurring: (id: string, recurring: boolean) => void;
 };
 
 export function useTasks(): UseTasks {
@@ -204,6 +231,35 @@ export function useTasks(): UseTasks {
     );
   }, []);
 
+  const editTaskText = useCallback((id: string, rawText: string) => {
+    const text = rawText.trim();
+    if (!text) return;
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const now = Date.now();
+        const due = parseDeadline(text, t.targetDate, now);
+        const { dueAt: _drop, ...rest } = t;
+        void _drop;
+        return { ...rest, text, ...(due !== null ? { dueAt: due } : {}) };
+      }),
+    );
+  }, []);
+
+  const setRecurring = useCallback((id: string, recurring: boolean) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        if (!recurring) {
+          const { recurring: _drop, ...rest } = t;
+          void _drop;
+          return rest;
+        }
+        return { ...t, recurring: true };
+      }),
+    );
+  }, []);
+
   const pending = useCallback(
     (day: TargetDate): Task[] =>
       tasks
@@ -227,5 +283,7 @@ export function useTasks(): UseTasks {
     clearBin,
     updateTaskDetail,
     toggleTaskDay,
+    editTaskText,
+    setRecurring,
   };
 }

@@ -14,6 +14,8 @@ import {
 import { Pill } from './Pill';
 import type { Task } from '@/lib/types';
 import { EASE_IOS, FADE, SPRING_TIGHT } from '@/lib/motion';
+import { taskView } from '@/lib/taskView';
+import { buzz } from '@/lib/haptics';
 
 type StackPos = { blur: number; opacity: number; scale: number; y: number };
 
@@ -42,10 +44,11 @@ type FocusStackProps = {
   onComplete: (id: string) => void;
   onOpenDetail: (taskId: string) => void;
   onToggleDay: (id: string) => void;
+  onEditText: (id: string, text: string) => void;
 };
 
 export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function FocusStack(
-  { tasks, onAdd, onComplete, onOpenDetail, onToggleDay },
+  { tasks, onAdd, onComplete, onOpenDetail, onToggleDay, onEditText },
   ref,
 ) {
   const [composing, setComposing] = useState(false);
@@ -87,6 +90,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
         return;
       }
       setMorphing(true);
+      buzz(10);
       // Confirmation spring.
       void containerControls.start({
         scale: [1, 1.04, 1],
@@ -177,7 +181,10 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                   style={{ zIndex: 1000 - idx }}
                 >
                   <Pill
-                    text={task.text}
+                    text={taskView(task).display}
+                    rawText={task.text}
+                    timeLabel={taskView(task).timeLabel}
+                    recurring={task.recurring === true}
                     size="focus"
                     layoutId={`pill-${task.id}`}
                     blur={composedPos.blur}
@@ -189,6 +196,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     onOpenDetail={() => onOpenDetail(task.id)}
                     onSwipeLeft={() => onComplete(task.id)}
                     onSwipeRight={() => onToggleDay(task.id)}
+                    onEditText={(next) => onEditText(task.id, next)}
                   />
                 </motion.div>
               );

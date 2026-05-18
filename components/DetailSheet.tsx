@@ -9,9 +9,10 @@ type DetailSheetProps = {
   task: Task | null;
   onClose: () => void;
   onChange: (id: string, detail: string) => void;
+  onSetRecurring: (id: string, recurring: boolean) => void;
 };
 
-export function DetailSheet({ task, onClose, onChange }: DetailSheetProps) {
+export function DetailSheet({ task, onClose, onChange, onSetRecurring }: DetailSheetProps) {
   const [draft, setDraft] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -111,8 +112,31 @@ export function DetailSheet({ task, onClose, onChange }: DetailSheetProps) {
 
             <button
               type="button"
+              onClick={() => onSetRecurring(task.id, !task.recurring)}
+              className="mt-3 flex w-full items-center justify-between rounded-2xl px-4 py-3"
+              style={{ backgroundColor: '#f3f3f3' }}
+              aria-pressed={task.recurring === true}
+            >
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#0a0a0a' }}>
+                Repeat every day
+              </span>
+              <span
+                className="relative inline-flex h-[26px] w-[44px] items-center rounded-full transition-colors"
+                style={{ backgroundColor: task.recurring ? '#0a0a0a' : '#d4d4d4' }}
+              >
+                <motion.span
+                  layout
+                  transition={SPRING_TIGHT}
+                  className="absolute h-[20px] w-[20px] rounded-full bg-white"
+                  style={{ left: task.recurring ? 21 : 3 }}
+                />
+              </span>
+            </button>
+
+            <button
+              type="button"
               onClick={onClose}
-              className="mt-4 w-full rounded-full py-3"
+              className="mt-3 w-full rounded-full py-3"
               style={{ backgroundColor: '#0a0a0a', color: '#fff', fontSize: 13, fontWeight: 500 }}
             >
               Done

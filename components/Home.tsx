@@ -24,11 +24,15 @@ export function Home() {
     clearBin,
     updateTaskDetail,
     toggleTaskDay,
+    editTaskText,
+    setRecurring,
   } = useTasks();
   const [day, setDay] = useState<TargetDate>('today');
   const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [undoId, setUndoId] = useState<string | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusRef = useRef<FocusStackHandle>(null);
 
   useEffect(() => {
@@ -62,9 +66,25 @@ export function Home() {
   const handleComplete = useCallback(
     (id: string) => {
       completeTask(id);
+      setUndoId(id);
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+      undoTimer.current = setTimeout(() => setUndoId(null), 4000);
     },
     [completeTask],
   );
+
+  const handleUndo = useCallback(() => {
+    if (!undoId) return;
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    restoreTask(undoId);
+    setUndoId(null);
+  }, [undoId, restoreTask]);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+    };
+  }, []);
 
   const handleOpenDetail = useCallback((id: string) => {
     setDetailTaskId(id);
@@ -94,13 +114,31 @@ export function Home() {
               onComplete={handleComplete}
               onOpenDetail={handleOpenDetail}
               onToggleDay={toggleTaskDay}
+              onEditText={editTaskText}
             />
           )}
         </div>
       </div>
 
-      {/* Meta row: notifications pill, centered */}
-      <div className="flex justify-center pb-3">
+      {/* Meta row: undo (transient) takes priority, else notifications */}
+      <div className="flex h-9 items-center justify-center pb-3">
+        {undoId ? (
+          <button
+            type="button"
+            onClick={handleUndo}
+            className="rounded-full px-4 py-2 uppercase"
+            style={{
+              fontSize: 9.5,
+              letterSpacing: '0.18em',
+              fontWeight: 600,
+              color: '#0a0a0a',
+              backgroundColor: '#f3f3f3',
+            }}
+          >
+            undo
+          </button>
+        ) : (
+          <>
         {permission === 'default' && (
           <button
             type="button"
@@ -130,6 +168,8 @@ export function Home() {
           >
             Add to Home Screen for nudges
           </button>
+        )}
+          </>
         )}
       </div>
 
@@ -182,6 +222,7 @@ export function Home() {
         task={detailTask}
         onClose={() => setDetailTaskId(null)}
         onChange={updateTaskDetail}
+        onSetRecurring={setRecurring}
       />
       </main>
     </LayoutGroup>

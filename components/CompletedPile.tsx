@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { Task } from '@/lib/types';
 import { SPRING } from '@/lib/motion';
+import { buzz } from '@/lib/haptics';
+import { taskView } from '@/lib/taskView';
 
 type CompletedPileProps = {
   items: Task[];
@@ -28,11 +30,17 @@ export function CompletedPile({ items, onRestore, onClear }: CompletedPileProps)
     if (confirming) {
       if (resetRef.current) clearTimeout(resetRef.current);
       setConfirming(false);
+      buzz(14);
       onClear();
       return;
     }
     setConfirming(true);
     resetRef.current = setTimeout(() => setConfirming(false), 2500);
+  };
+
+  const handleRestore = (id: string) => {
+    buzz(10);
+    onRestore(id);
   };
 
   if (items.length === 0) return null;
@@ -46,7 +54,7 @@ export function CompletedPile({ items, onRestore, onClear }: CompletedPileProps)
         <motion.button
           key={t.id}
           layoutId={`pill-${t.id}`}
-          onClick={() => onRestore(t.id)}
+          onClick={() => handleRestore(t.id)}
           whileTap={{ scale: 0.97, opacity: 0.9 }}
           transition={SPRING}
           className="overflow-hidden rounded-full px-3 py-1.5 text-left"
@@ -68,7 +76,7 @@ export function CompletedPile({ items, onRestore, onClear }: CompletedPileProps)
               textDecorationColor: '#0a0a0a',
             }}
           >
-            {t.text}
+            {taskView(t).display}
           </span>
         </motion.button>
       ))}

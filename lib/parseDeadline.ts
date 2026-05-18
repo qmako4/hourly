@@ -16,6 +16,17 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const TIME_RE =
   /\b(?:at|by|@)\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?\b/i;
 
+/** The matched "at 12pm" substring and where it sits in the text. */
+export function findTimePhrase(
+  text: string,
+): { phrase: string; index: number } | null {
+  const m = TIME_RE.exec(text);
+  if (!m) return null;
+  return { phrase: m[0], index: m.index };
+}
+
+/** Resolve a parsed clock time into an absolute ms timestamp, anchored to
+ *  the task's target day. Returns null if it has already passed. */
 export function parseDeadline(
   text: string,
   targetDate: TargetDate,
@@ -49,4 +60,16 @@ export function parseDeadline(
   // Past deadlines are dropped (per spec): the task survives but no pings.
   if (due <= now) return null;
   return due;
+}
+
+/** Compact human label for a deadline timestamp, e.g. "12pm", "6:30pm", "9am". */
+export function formatTimeLabel(dueAt: number): string {
+  const d = new Date(dueAt);
+  const h24 = d.getHours();
+  const mins = d.getMinutes();
+  const meridiem = h24 >= 12 ? 'pm' : 'am';
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return mins === 0
+    ? `${h12}${meridiem}`
+    : `${h12}:${String(mins).padStart(2, '0')}${meridiem}`;
 }
