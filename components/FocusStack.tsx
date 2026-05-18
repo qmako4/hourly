@@ -16,6 +16,7 @@ import type { Task } from '@/lib/types';
 import { EASE_IOS, FADE, SPRING_TIGHT } from '@/lib/motion';
 import { taskView } from '@/lib/taskView';
 import { buzz } from '@/lib/haptics';
+import { useSpeechInput } from '@/hooks/useSpeechInput';
 
 type StackPos = { blur: number; opacity: number; scale: number; y: number };
 
@@ -56,6 +57,18 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
   const [morphing, setMorphing] = useState(false);
   const containerControls = useAnimationControls();
   const inputRef = useRef<HTMLInputElement>(null);
+  const speech = useSpeechInput(setDraft);
+
+  const handleMic = useCallback(() => {
+    if (!composing) setComposing(true);
+    if (speech.listening) {
+      speech.stop();
+      return;
+    }
+    buzz(10);
+    setDraft('');
+    speech.start();
+  }, [composing, speech]);
 
   const beginCompose = useCallback(() => {
     setComposing(true);
@@ -230,7 +243,7 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                       color: '#c4c4c4',
                     }}
                   >
-                    what&apos;s first?
+                    {speech.listening ? 'listening…' : "what's first?"}
                   </motion.div>
                 )}
                 <input
@@ -256,6 +269,49 @@ export const FocusStack = forwardRef<FocusStackHandle, FocusStackProps>(function
                     color: '#0a0a0a',
                   }}
                 />
+                {speech.supported && (
+                  <button
+                    type="button"
+                    onClick={handleMic}
+                    aria-label={speech.listening ? 'Stop voice input' : 'Add task by voice'}
+                    className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: speech.listening ? '#0a0a0a' : 'transparent',
+                    }}
+                  >
+                    <motion.span
+                      className="inline-flex"
+                      animate={
+                        speech.listening
+                          ? { scale: [1, 1.18, 1] }
+                          : { scale: 1 }
+                      }
+                      transition={
+                        speech.listening
+                          ? { duration: 1, repeat: Infinity, ease: 'easeInOut' }
+                          : { duration: 0.15 }
+                      }
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+                        <rect
+                          x="7.5"
+                          y="2.5"
+                          width="5"
+                          height="9"
+                          rx="2.5"
+                          stroke={speech.listening ? '#ffffff' : '#0a0a0a'}
+                          strokeWidth="1.2"
+                        />
+                        <path
+                          d="M5 9a5 5 0 0 0 10 0M10 14v3.5M7.5 17.5h5"
+                          stroke={speech.listening ? '#ffffff' : '#0a0a0a'}
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </motion.span>
+                  </button>
+                )}
               </div>
             </form>
           </div>
